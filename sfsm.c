@@ -72,3 +72,7 @@ void* fsm_get_state_data(fsm_t* fsm)
     return get_acc_state(fsm)->data;
 }
 
+void fsm_get_ev(fsm_t* fsm, ev_t* ev)
+{
+}
+
