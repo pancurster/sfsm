@@ -9,12 +9,14 @@ extern "C" {
 
 #define FSM_NO_DEF (-1)
 #define FSM_NO_TR (-1)
-#define FSM_DEF_TR (-1)
+#define FSM_DEF_TR_ID (-1)
 
 typedef struct fsm_t fsm_t;
 typedef struct state_t state_t;
 typedef struct event_t event_t;
 typedef struct tr_t tr_t;
+
+extern event_t FSM_DEF_TR;
 
 struct event_t {
     int evid;
@@ -55,7 +57,6 @@ struct state_t {
 
 void fsm_init(fsm_t* fsm, state_t* statetab, int nstates);
 void fsm_run(fsm_t* fsm);
-void fsm_go_state(fsm_t* fsm, int stid);
 void fsm_go_default(fsm_t* fsm);
 void* fsm_get_state_data(fsm_t* fsm);
 void fsm_ev(fsm_t* fsm, event_t* ev);

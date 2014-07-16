@@ -31,10 +31,9 @@ void st3_exit(state_t* st) { reccall("Exit st3"); }
 void st1_enter_def_transition_to_st2(state_t* st)
 {
     reccall("Entering st1 going st2");
-    //fsm_go_state(&fsm, ST2_ID);
 }
 
-event_t ev1 = {FSM_DEF_TR};
+event_t ev1 = {EV1_ID};
 event_t ev2 = {EV2_ID};
 event_t ev3 = {EV3_ID};
 event_t ev4 = {EV4_ID};
@@ -43,9 +42,9 @@ event_t ev6 = {EV6_ID};
 event_t ev7 = {EV7_ID};
 /* Row equal state id, column mean nothing or could equal max events in one of state */
 tr_t tr[] = {
-    /*sid_from, sid_to, ev, hand.| sidfrom, sidto, ev,  handler */
+    /*sid_from, sid_to, ev, handler */
     {ST1_ID, ST1_ID, ev2, hand2},
-    {ST1_ID, ST2_ID, ev1, handev1},
+    {ST1_ID, ST2_ID, FSM_DEF_TR, NULL},
     {ST1_ID, FSM_NO_TR, ev3, hand3},
     /* line group states */
     {ST2_ID, ST1_ID, ev4, NULL},

@@ -9,6 +9,10 @@ static tr_t* check_default_tr(fsm_t* fsm);
 static void make_default_tr(fsm_t* fsm);
 static void change_state(fsm_t* fsm, int sid);
 
+event_t FSM_DEF_TR = {
+    .evid = FSM_DEF_TR_ID,
+};
+
 static state_t* get_raw_state(fsm_t* fsm, int sid)
 {
     return &fsm->states[sid];
@@ -28,7 +32,7 @@ static tr_t* check_default_tr(fsm_t* fsm)
 {
     int i;
     for (i=0; i < fsm->tr_size; i++) {
-        if (fsm->tr[i].sid_from == fsm->current_sid && fsm->tr[i].e.evid == FSM_DEF_TR)
+        if (fsm->tr[i].sid_from == fsm->current_sid && fsm->tr[i].e.evid == FSM_DEF_TR.evid)
             return &fsm->tr[i];
     }
     return NULL;
@@ -36,9 +40,23 @@ static tr_t* check_default_tr(fsm_t* fsm)
 
 static void make_default_tr(fsm_t* fsm)
 {
-    tr_t* tr;
-    if (tr = check_default_tr(fsm))
-        change_state(fsm, tr->sid_to);
+    fsm_ev(fsm, &FSM_DEF_TR);
+}
+
+static void run_on_exit(fsm_t* fsm, int sid)
+{
+    state_t* st;
+    st = get_raw_state(fsm, sid);
+    if (st->on_exit)
+        st->on_exit(st);
+}
+
+static void run_on_enter(fsm_t* fsm, int sid)
+{
+    state_t* st;
+    st = get_raw_state(fsm, sid);
+    if (st->on_enter)
+        st->on_enter(st);
 }
 
 static void change_state(fsm_t* fsm, int sid)
@@ -49,13 +67,11 @@ static void change_state(fsm_t* fsm, int sid)
     tr_t* tr;
     if (tr = is_tr_possible(fsm, curr, to))
     {
-        if (fsm->states[fsm->current_sid].on_exit)
-            fsm->states[fsm->current_sid].on_exit(get_raw_state(fsm, fsm->current_sid));
+        run_on_exit(fsm, fsm->current_sid);
 
         fsm->current_sid = sid;
 
-        if (fsm->states[fsm->current_sid].on_enter)
-            fsm->states[fsm->current_sid].on_enter(get_raw_state(fsm, fsm->current_sid));
+        run_on_enter(fsm, fsm->current_sid);
     }
 
     make_default_tr(fsm);
@@ -68,15 +84,6 @@ void fsm_init(fsm_t* fsm, state_t* statetab, int nstates)
     fsm->states = statetab;
     fsm->states_size = nstates;
     fsm->current_sid = 0;
-}
-
-void fsm_go_state(fsm_t* fsm, int stid)
-{
-    int i;
-    for (i=0; i<fsm->states_size; i++) {
-        if (fsm->states[i].sid == stid)
-            change_state(fsm, stid);
-    }
 }
 
 void* fsm_get_state_data(fsm_t* fsm)
@@ -92,18 +99,15 @@ void fsm_ev(fsm_t* fsm, event_t* ev)
     for (i=0; i < fsm->tr_size; i++) {
         if (fsm->current_sid == fsm->tr[i].sid_from && fsm->tr[i].e.evid == ev->evid)
         {
-            curr = get_raw_state(fsm, fsm->current_sid);
-            if (curr->on_exit)
-                curr->on_exit(curr);
+            if (fsm->tr[i].sid_to != FSM_NO_TR)
+                run_on_exit(fsm, fsm->current_sid);
 
             if (fsm->tr[i].h)
                 fsm->tr[i].h();
 
             if (fsm->tr[i].sid_to != FSM_NO_TR) {
                 fsm->current_sid = fsm->tr[i].sid_to;
-                st = get_raw_state(fsm, fsm->current_sid);
-                if (st->on_enter)
-                    st->on_enter(st);
+                run_on_enter(fsm, fsm->current_sid);
             }
             break;
         }
