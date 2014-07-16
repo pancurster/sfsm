@@ -46,6 +46,12 @@ static void run_on_enter(fsm_t* fsm, int sid)
         st->on_enter(st);
 }
 
+static void run_handler(tr_t* tr)
+{
+    if (tr->h)
+        tr->h();
+}
+
 void fsm_init(fsm_t* fsm, state_t* statetab, int nstates)
 {
     memset(fsm, 0, sizeof(fsm));
@@ -66,19 +72,22 @@ void fsm_ev(fsm_t* fsm, event_t* ev)
     tr_t* tr;
     if (tr = find_possible_tr(fsm, ev))
     {
-        if (tr->sid_to != FSM_NO_STATE)
+        if (tr->sid_to == FSM_NO_STATE)
+        {
+            run_handler(tr);
+            return;
+        }
+        else
+        {
             run_on_exit(fsm, fsm->current_sid);
 
-        if (tr->h)
-            tr->h();
+            run_handler(tr);
 
-        if (tr->sid_to != FSM_NO_STATE) {
             fsm->current_sid = tr->sid_to;
             run_on_enter(fsm, fsm->current_sid);
+
+            make_default_tr(fsm);
         }
-
-        make_default_tr(fsm);
-
     }
 }
 
