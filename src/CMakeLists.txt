@@ -1,0 +1,7 @@
+PROJECT(sfsmlib C)
+
+SET(CMAKE_C_FLAGS -g)
+SET(BUILD_SHARED_LIBS 1)
+
+ADD_LIBRARY(sfsm sfsm.c)
+
