@@ -8,7 +8,7 @@ extern "C" {
 #include <string.h> /* size_t */
 
 #define FSM_NO_DEF (-1)
-#define FSM_NO_TR (-1)
+#define FSM_NO_STATE (-1)
 #define FSM_DEF_TR_ID (-1)
 
 typedef struct fsm_t fsm_t;
