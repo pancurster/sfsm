@@ -4,10 +4,7 @@
 #include <string.h>
 
 static state_t* get_raw_state(fsm_t* fsm, int sid);
-static tr_t* is_tr_possible(fsm_t* fsm, state_t* from, state_t* to);
-static tr_t* check_default_tr(fsm_t* fsm);
 static void make_default_tr(fsm_t* fsm);
-static void change_state(fsm_t* fsm, int sid);
 
 event_t FSM_DEF_TR = {
     .evid = FSM_DEF_TR_ID,
@@ -18,18 +15,6 @@ static state_t* get_raw_state(fsm_t* fsm, int sid)
     return &fsm->states[sid];
 }
 
-/*
-static tr_t* is_tr_possible(fsm_t* fsm, state_t* from, state_t* to)
-{
-    int i;
-    for (i=0; i < fsm->tr_size; i++) {
-        if (fsm->tr[i].sid_from == from->sid && fsm->tr[i].sid_to == to->sid)
-            return &fsm->tr[i];
-    }
-    return NULL;
-}
-*/
-
 static tr_t* find_possible_tr(fsm_t* fsm, event_t* ev)
 {
     int i;
@@ -39,18 +24,6 @@ static tr_t* find_possible_tr(fsm_t* fsm, event_t* ev)
     }
     return NULL;
 }
-
-/*
-static tr_t* check_default_tr(fsm_t* fsm)
-{
-    int i;
-    for (i=0; i < fsm->tr_size; i++) {
-        if (fsm->tr[i].sid_from == fsm->current_sid && fsm->tr[i].e.evid == FSM_DEF_TR.evid)
-            return &fsm->tr[i];
-    }
-    return NULL;
-}
-*/
 
 static void make_default_tr(fsm_t* fsm)
 {
@@ -73,26 +46,6 @@ static void run_on_enter(fsm_t* fsm, int sid)
         st->on_enter(st);
 }
 
-/*
-static void change_state(fsm_t* fsm, int sid)
-{
-    state_t* curr = get_raw_state(fsm, fsm->current_sid);
-    state_t* to = get_raw_state(fsm, sid);
-
-    tr_t* tr;
-    if (tr = is_tr_possible(fsm, curr, to))
-    {
-        run_on_exit(fsm, fsm->current_sid);
-
-        fsm->current_sid = sid;
-
-        run_on_enter(fsm, fsm->current_sid);
-    }
-
-    make_default_tr(fsm);
-}
-*/
-
 void fsm_init(fsm_t* fsm, state_t* statetab, int nstates)
 {
     memset(fsm, 0, sizeof(fsm));
@@ -112,24 +65,20 @@ void fsm_ev(fsm_t* fsm, event_t* ev)
     int i;
     tr_t* tr;
     if (tr = find_possible_tr(fsm, ev))
-    for (i=0; i < fsm->tr_size; i++) {
-        if (fsm->current_sid == fsm->tr[i].sid_from && fsm->tr[i].e.evid == ev->evid)
-        {
-            if (fsm->tr[i].sid_to != FSM_NO_STATE)
-                run_on_exit(fsm, fsm->current_sid);
+    {
+        if (tr->sid_to != FSM_NO_STATE)
+            run_on_exit(fsm, fsm->current_sid);
 
-            if (fsm->tr[i].h)
-                fsm->tr[i].h();
+        if (tr->h)
+            tr->h();
 
-            if (fsm->tr[i].sid_to != FSM_NO_STATE) {
-                fsm->current_sid = fsm->tr[i].sid_to;
-                run_on_enter(fsm, fsm->current_sid);
-            }
-
-            make_default_tr(fsm);
-
-            break;
+        if (tr->sid_to != FSM_NO_STATE) {
+            fsm->current_sid = tr->sid_to;
+            run_on_enter(fsm, fsm->current_sid);
         }
+
+        make_default_tr(fsm);
+
     }
 }
 
