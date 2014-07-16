@@ -1,7 +1,5 @@
 #include "sfsm.h"
-#include <malloc.h>
 #include <assert.h>
-#include <string.h>
 
 static state_t* get_raw_state(fsm_t* fsm, int sid);
 static void make_default_tr(fsm_t* fsm);
@@ -50,15 +48,6 @@ static void run_handler(tr_t* tr)
 {
     if (tr->h)
         tr->h();
-}
-
-void fsm_init(fsm_t* fsm, state_t* statetab, int nstates)
-{
-    memset(fsm, 0, sizeof(fsm));
-
-    fsm->states = statetab;
-    fsm->states_size = nstates;
-    fsm->current_sid = 0;
 }
 
 void* fsm_get_state_data(fsm_t* fsm)

@@ -24,10 +24,10 @@ struct event_t {
 
 
 struct tr_t {
-    int sid_from;
-    int sid_to;
-    event_t e;
-    void (*h)(void);
+    int sid_from;               /* transition from state... */
+    int sid_to;                 /* ...to state */
+    event_t e;                  /* transition triger, event */
+    void (*h)(void);            /* event handler */
 };
 
 struct fsm_t {
@@ -35,17 +35,15 @@ struct fsm_t {
     state_t* states;            /* states table */
     size_t states_size;         /* states tabel size */
 
-    tr_t* tr;                /* permited transitions - handle states id */
-    int tr_size;
+    tr_t* tr;                   /* transitions table */
+    size_t tr_size;             /* transitions table size */
 
     int defstid;                /* default state id */
-
-    int current_sid;               /* present state */
-    int* id2state;              /* maps states id to state index in table */
+    int current_sid;            /* current state id */
 };
 
 struct state_t {
-    int sid;
+    int sid;                    /* state id */
     void (*on_enter)(state_t* st);
     void (*on_exit)(state_t* st);
 
@@ -55,13 +53,9 @@ struct state_t {
     size_t nsubstates;
 };
 
-void fsm_init(fsm_t* fsm, state_t* statetab, int nstates);
-void fsm_run(fsm_t* fsm);
-void fsm_go_default(fsm_t* fsm);
-void* fsm_get_state_data(fsm_t* fsm);
-void fsm_ev(fsm_t* fsm, event_t* ev);
-
 void fsm_start(fsm_t* fsm);
+void fsm_ev(fsm_t* fsm, event_t* ev);
+void* fsm_get_state_data(fsm_t* fsm);
 
 #ifdef __cplusplus
 }
