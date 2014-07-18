@@ -6,20 +6,42 @@
 #include <cstdio>
 #include "../src/sfsm.h"
 
-enum {EV1_ID, EV2_ID, EV3_ID, EV4_ID, EV5_ID, EV6_ID, EV7_ID};
+class eventComparator : public MockNamedValueComparator
+{
+public:
+    virtual bool isEqual(void* object1, void* object2)
+    {
+        event_t* ev1 = (event_t*)object1;
+        event_t* ev2 = (event_t*)object2;
+
+        return ev1->evid == ev2->evid
+            && ev1->data == ev2->data;
+    }
+
+    virtual SimpleString valueToString(void* object)
+    {
+        return StringFrom(object);
+    }
+};
+
+enum {EV1_ID, EV2_ID, EV3_ID, EV4_ID, EV5_ID, EV6_ID, EV7_ID, EV8_ID};
 enum {ST1_ID, ST2_ID, ST3_ID, ST_MAX};
 
 fsm_t fsm;
 
 void reccall(const char* param) { mock().actualCall("reccall").withParameter("param", param); };
+void rechand(event_t* ev) { mock().actualCall("rechand").withParameter("ev", ev); }
 
-void handle_ev1(void* data) { reccall("Handling ev1"); }
-void handle_ev2(void* data) { reccall("Handling ev2"); }
-void handev1(void) { reccall("Handev1"); }
-void hand2(void) { reccall("Hand2"); }
-void hand3(void) { reccall("Hand3"); }
-void hand6(void) { reccall("Hand6"); }
-void hand7(void) { reccall("Hand7"); }
+void hand1(event_t* ev) { reccall("Hand1"); }
+void hand2(event_t* ev) { reccall("Hand2"); }
+void hand3(event_t* ev) { reccall("Hand3"); }
+void hand6(event_t* ev) { reccall("Hand6"); }
+void hand7(event_t* ev) { reccall("Hand7"); }
+void hand8(event_t* ev)
+{ 
+    reccall("Hand8");
+    rechand(ev);
+}
 void st1_enter(state_t* st) { reccall("Entering st1"); }
 void st2_enter(state_t* st) { reccall("Entering st2"); }
 void st3_enter(state_t* st) { reccall("Entering st3"); }
@@ -34,6 +56,7 @@ event_t ev4 = {EV4_ID};
 event_t ev5 = {EV5_ID};
 event_t ev6 = {EV6_ID};
 event_t ev7 = {EV7_ID};
+event_t ev8 = {EV8_ID};
 /* Row equal state id, column mean nothing or could equal max events in one of state */
 tr_t tr[] = {
     /*sid_from, sid_to, ev, handler */
@@ -42,6 +65,7 @@ tr_t tr[] = {
     {ST2_ID, FSM_NO_STATE, ev3, hand3},
     {ST2_ID, ST1_ID, ev4, NULL},
     {ST2_ID, ST3_ID, ev5, NULL},
+    {ST2_ID, ST2_ID, ev8, hand8},
 
     {ST3_ID, ST2_ID, ev6, hand6},
     {ST3_ID, ST3_ID, ev7, hand7},
@@ -162,9 +186,25 @@ TEST(sfsm_fixture, test_event_handle_but_no_transition)
     fsm_ev(&fsm, &ev3);
 }
 
+TEST(sfsm_fixture, test_passing_data_in_event)
+{
+    fsm_start(&fsm);
+    ev8.data = (void*)666;
+    event_t evx = {EV8_ID};
+    evx.data = (void*)666;
+
+    mock().expectOneCall("reccall").withParameter("param", "Hand8");
+    mock().expectOneCall("rechand").withParameterOfType("event_t*", "ev", &ev8);
+    fsm_ev(&fsm, &ev8);
+}
+
 int main(int ac, char* av[])
 {
     MockSupportPlugin mockPlugin;
+
+    eventComparator evcmp;
+    mockPlugin.installComparator("event_t*", evcmp);
+
     TestRegistry::getCurrentRegistry()->installPlugin(&mockPlugin);
     return CommandLineTestRunner::RunAllTests(ac, av);
 }

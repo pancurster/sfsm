@@ -44,10 +44,10 @@ static void run_on_enter(fsm_t* fsm, int sid)
         st->on_enter(st);
 }
 
-static void run_handler(tr_t* tr)
+static void run_handler(tr_t* tr, event_t* ev)
 {
     if (tr->h)
-        tr->h();
+        tr->h(ev);
 }
 
 void* fsm_get_state_data(fsm_t* fsm)
@@ -63,14 +63,14 @@ void fsm_ev(fsm_t* fsm, event_t* ev)
     {
         if (tr->sid_to == FSM_NO_STATE)
         {
-            run_handler(tr);
+            run_handler(tr, ev);
             return;
         }
         else
         {
             run_on_exit(fsm, fsm->current_sid);
 
-            run_handler(tr);
+            run_handler(tr, ev);
 
             fsm->current_sid = tr->sid_to;
             run_on_enter(fsm, fsm->current_sid);

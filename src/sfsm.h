@@ -20,6 +20,7 @@ extern event_t FSM_DEF_TR;
 
 struct event_t {
     int evid;
+    void* data;
 };
 
 
@@ -27,7 +28,7 @@ struct tr_t {
     int sid_from;               /* transition from state... */
     int sid_to;                 /* ...to state */
     event_t e;                  /* transition triger, event */
-    void (*h)(void);            /* event handler */
+    void (*h)(event_t* ev);     /* event handler */
 };
 
 struct fsm_t {
@@ -48,9 +49,6 @@ struct state_t {
     void (*on_exit)(state_t* st);
 
     void* data;                 /* state data */
-
-    state_t* substate;
-    size_t nsubstates;
 };
 
 void fsm_start(fsm_t* fsm);
