@@ -1,6 +1,6 @@
 #!/usr/bin/python
 import sys
-from graphviz import Digraph
+import gv
 
 class Gengraph(object):
     def __init__(self):
@@ -31,17 +31,23 @@ class Gengraph(object):
             # adding nodes to graph
             if (not tok[0] in nodeSet):
                 nodeSet.add(tok[0])
-                self.dot.node(tok[0], tok[0], shape="box")
+                n = gv.node(self.dot, tok[0])
+                gv.setv(n, "shape", "Mrecord")
             if ((not tok[1] in nodeSet) and (tok[1] != "FSM_NO_STATE")):
                 nodeSet.add(tok[1])
-                self.dot.node(tok[1], tok[1], shape="box")
+                n = gv.node(self.dot, tok[1])
+                gv.setv(n, "shape", "Mrecord")
             
             if (tok[2] == "FSM_DEF_TR"):
-                self.dot.edge(tok[0], tok[1], label="["+tok[3]+"]  ")
+                e = gv.edge(self.dot, tok[0], tok[1])
+                gv.setv(e, "label", "["+tok[3]+"]  ")
             elif (tok[1] == "FSM_NO_STATE"):
-                self.dot.edge(tok[0], tok[0], label=tok[2]+"["+tok[3]+"]  ")
+                e = gv.edge(self.dot, tok[0], tok[0])
+                gv.setv(e, "label", tok[2]+"["+tok[3]+"]  ")
+                gv.setv(e, "arrowhead", "tee")
             else:
-                self.dot.edge(tok[0], tok[1], label=tok[2]+"["+tok[3]+"]  ")
+                e = gv.edge(self.dot, tok[0], tok[1])
+                gv.setv(e, "label", tok[2]+"["+tok[3]+"]  ")
     
     def gen(self, filename):
 
@@ -53,7 +59,7 @@ class Gengraph(object):
         for line in src:
             if (line.find('tr_t') >= 0):
                 found = 1
-                self.dot = Digraph(comment=self.getTrName(line))
+                self.dot = gv.digraph(self.getTrName(line))
                 print "Name: ", self.getTrName(line)
                 continue
 
@@ -66,13 +72,15 @@ class Gengraph(object):
                     continue
                 line = line.replace('{', '')
                 line = line.replace('}', '')
+                line = line.strip("\n")
                 trdefinition.append(line)
     
         # parsing each line and creating dot graph
         self.createEdge(trdefinition)
 
-        print self.dot.source
-        self.dot.render("out.gv")
+        gv.layout(self.dot, "dot")
+        gv.render(self.dot, "dot", "out.gv")
+        gv.render(self.dot, "png", "out.png")
 
         print 'finded definition:'
         for line in trdefinition:
