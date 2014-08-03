@@ -194,7 +194,8 @@ TEST(sfsm_fixture, test_passing_data_in_event)
     evx.data = (void*)666;
 
     mock().expectOneCall("reccall").withParameter("param", "Hand8");
-    mock().expectOneCall("rechand").withParameterOfType("event_t*", "ev", &ev8);
+    //mock().expectOneCall("rechand").withParameterOfType("event_t*", "ev", &ev8);
+    mock().expectOneCall("rechand").withParameter("ev", &ev8);
     fsm_ev(&fsm, &ev8);
 }
 
